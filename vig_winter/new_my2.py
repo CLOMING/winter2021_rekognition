@@ -111,8 +111,7 @@ def main():
     #ppe0.jpg
     #ppe1.jpg
     #ppe2.jpg
-    #ㅎㅎㅎㅎㅎㅎㅎㅎ
-    #ajsdhasjdhkajsdh
+
     bucket='vigwinter'
     confidence=80  #신뢰도
 
