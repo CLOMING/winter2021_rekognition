@@ -105,7 +105,7 @@ def detect_labels(photo, confidence):
     return len(response['Persons'])  #인원 수 출력
 
 def main():
-    photo='LBJ.jpg' 
+    photo='image/LBJ.jpg' 
     #mask1.jpg
     #mask2.jpg
     #ppe0.jpg
