@@ -1,12 +1,15 @@
 from argparse import ArgumentParser
 from dataclasses import dataclass
 import io
+import os.path
 from pprint import pprint
-from typing import Dict
+import sys
+from typing import Dict, List
 
 import boto3
 from PIL import Image
 
+sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 import utils
 
 
@@ -53,7 +56,7 @@ class FaceSearcher:
         self.max_faces = max_faces
 
     @utils.measure_time
-    def run(self) -> list[FaceMatch]:
+    def run(self) -> List[FaceMatch]:
         self.read_image()
         return self.call_rekognition()
 
@@ -83,7 +86,7 @@ class FaceSearcher:
         return image_bytes
 
     @utils.measure_time
-    def call_rekognition(self) -> list[FaceMatch]:
+    def call_rekognition(self) -> List[FaceMatch]:
         try:
             self.image_bytes
         except AttributeError:
