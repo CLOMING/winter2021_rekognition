@@ -161,7 +161,15 @@ class MaskDetector:
             },
         )
 
-        return [Person.parse(person) for person in response['Persons']]
+        # return [Person.parse(person) for person in response['Persons']]
+
+        persons = []
+
+        for data in response['Persons']:
+            person = Person.parse(data)
+            persons.append(person)
+
+        return persons
 
 
 if __name__ == "__main__":
