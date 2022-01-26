@@ -2,12 +2,15 @@ from argparse import ArgumentParser
 from dataclasses import dataclass
 from enum import Enum
 import io
+import os.path
 from pprint import pprint
-from typing import Dict
+import sys
+from typing import Dict, List
 
 import boto3
 from PIL import Image
 
+sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 import utils
 
 
@@ -42,7 +45,7 @@ class EquipmentDetection:
 @dataclass(frozen=True)
 class BodyPart:
     confidence: float
-    equipment_detections: list[EquipmentDetection]
+    equipment_detections: List[EquipmentDetection]
     name: str
 
     def parse(data: Dict):
@@ -67,7 +70,7 @@ class Person:
     bounding_box: utils.BoundingBox
     id: float
     confidence: float
-    body_parts: list[BodyPart]
+    body_parts: List[BodyPart]
 
     @property
     def mask_status(self) -> MaskStatus:
@@ -113,7 +116,7 @@ class MaskDetector:
         self.confidence = confidence
 
     @utils.measure_time
-    def run(self) -> list[Person]:
+    def run(self) -> List[Person]:
         self.read_image()
         return self.call_rekognition()
 
@@ -143,7 +146,7 @@ class MaskDetector:
         return image_bytes
 
     @utils.measure_time
-    def call_rekognition(self) -> list[Person]:
+    def call_rekognition(self) -> List[Person]:
         try:
             self.image_bytes
         except AttributeError:
