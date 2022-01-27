@@ -2,25 +2,7 @@ from dataclasses import dataclass
 from typing import Dict, List
 
 from amazon_rekognition import AmazonRekognition
-import utils
-
-
-@dataclass
-class Face:
-    bounding_box: utils.BoundingBox
-    confidence: float
-    external_image_id: str
-    face_id: str
-    image_id: str
-
-    def parse(data: Dict):
-        return Face(
-            bounding_box=utils.BoundingBox.parse(data['BoundingBox']),
-            confidence=data['Confidence'],
-            external_image_id=data['ExternalImageId'],
-            face_id=data["FaceId"],
-            image_id=data["ImageId"],
-        )
+from utils import *
 
 
 @dataclass
@@ -76,8 +58,8 @@ if __name__ == "__main__":
     threshold = float(args.threshold) if args.threshold else 70
     max_faces = int(args.max_faces) if args.max_faces else 2
 
-    utils.enable_measure_time(
-    ) if args.measure_time == True else utils.disable_measure_time()
+    enable_measure_time(
+    ) if args.measure_time == True else disable_measure_time()
 
     face_searcher = FaceSearcher(
         image_path=image_path,
