@@ -38,6 +38,7 @@ class AmazonRekognition(Generic[T], metaclass=ABCMeta):
         self.image_bytes = image_bytes
         return image_bytes
 
+    @measure_time
     def call_rekognition(self) -> T:
         try:
             self.image_bytes
