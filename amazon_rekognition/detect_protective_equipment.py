@@ -1,16 +1,8 @@
-from argparse import ArgumentParser
 from dataclasses import dataclass
 from enum import Enum
-import io
-import os.path
-from pprint import pprint
-import sys
 from typing import Dict, List
 
-import boto3
-from PIL import Image
-
-sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+from amazon_rekognition import AmazonRekognition
 import utils
 
 
@@ -105,58 +97,18 @@ class Person:
         )
 
 
-class MaskDetector:
+class MaskDetector(AmazonRekognition[List[Person]]):
 
     def __init__(
         self,
         image_path: str,
         confidence: float = 80.0,
     ) -> None:
-        self.image_path = image_path
+        super().__init__(image_path)
         self.confidence = confidence
 
-    @utils.measure_time
-    def run(self) -> List[Person]:
-        self.read_image()
-        return self.call_rekognition()
-
-    @utils.measure_time
-    def read_image(self) -> bytearray:
-        try:
-            self.image_bytes
-        except AttributeError:
-            pass
-        else:
-            if not (self.image_bytes == None):
-                return self.image_bytes
-
-        image_bytes: bytearray
-
-        with open(self.image_path, 'rb') as image_file:
-            image = Image.open(image_file)
-            stream = io.BytesIO()
-            image.save(stream, quality=25, format=image.format)
-            image_bytes = stream.getvalue()
-            image.close()
-
-        if image_bytes == None:
-            raise ValueError("image_bytes is None")
-
-        self.image_bytes = image_bytes
-        return image_bytes
-
-    @utils.measure_time
-    def call_rekognition(self) -> List[Person]:
-        try:
-            self.image_bytes
-        except AttributeError:
-            self.read_image()
-        else:
-            if self.image_bytes == None:
-                self.read_image()
-
-        client = boto3.client('rekognition')
-        response = client.detect_protective_equipment(
+    def get_response(self) -> Dict:
+        return self.client.detect_protective_equipment(
             Image={'Bytes': self.image_bytes},
             SummarizationAttributes={
                 'MinConfidence': confidence,
@@ -164,18 +116,14 @@ class MaskDetector:
             },
         )
 
-        # return [Person.parse(person) for person in response['Persons']]
-
-        persons = []
-
-        for data in response['Persons']:
-            person = Person.parse(data)
-            persons.append(person)
-
-        return persons
+    def parse_result(self, response: Dict) -> List[Person]:
+        return [Person.parse(person) for person in response['Persons']]
 
 
 if __name__ == "__main__":
+    from argparse import ArgumentParser
+    from pprint import pprint
+
     parser = ArgumentParser()
 
     parser.add_argument('--path', required=True)

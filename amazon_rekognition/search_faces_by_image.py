@@ -1,15 +1,7 @@
-from argparse import ArgumentParser
 from dataclasses import dataclass
-import io
-import os.path
-from pprint import pprint
-import sys
 from typing import Dict, List
 
-import boto3
-from PIL import Image
-
-sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+from amazon_rekognition import AmazonRekognition
 import utils
 
 
@@ -43,7 +35,7 @@ class FaceMatch:
         )
 
 
-class FaceSearcher:
+class FaceSearcher(AmazonRekognition[List[FaceMatch]]):
 
     def __init__(
         self,
@@ -51,70 +43,26 @@ class FaceSearcher:
         threshold: float = 70.0,
         max_faces: int = 2,
     ) -> None:
-        self.image_path = image_path
+        super().__init__(image_path)
         self.threshold = threshold
         self.max_faces = max_faces
 
-    @utils.measure_time
-    def run(self) -> List[FaceMatch]:
-        self.read_image()
-        return self.call_rekognition()
-
-    @utils.measure_time
-    def read_image(self) -> bytearray:
-        try:
-            self.image_bytes
-        except AttributeError:
-            pass
-        else:
-            if not (self.image_bytes == None):
-                return self.image_bytes
-
-        image_bytes: bytearray
-
-        with open(self.image_path, 'rb') as image_file:
-            image = Image.open(image_file)
-            stream = io.BytesIO()
-            image.save(stream, quality=25, format=image.format)
-            image_bytes = stream.getvalue()
-            image.close()
-
-        if image_bytes == None:
-            raise ValueError("image_bytes is None")
-
-        self.image_bytes = image_bytes
-        return image_bytes
-
-    @utils.measure_time
-    def call_rekognition(self) -> List[FaceMatch]:
-        try:
-            self.image_bytes
-        except AttributeError:
-            self.read_image()
-        else:
-            if self.image_bytes == None:
-                self.read_image()
-
-        client = boto3.client('rekognition')
-        response = client.search_faces_by_image(
+    def get_response(self) -> Dict:
+        return self.client.search_faces_by_image(
             CollectionId='Maskless_Collection',
             Image={'Bytes': self.image_bytes},
             FaceMatchThreshold=self.threshold,
             MaxFaces=self.max_faces,
         )
 
+    def parse_result(self, response: Dict) -> List[FaceMatch]:
         return [FaceMatch.parse(match) for match in response['FaceMatches']]
-
-        face_matches = []
-
-        for data in response['FaceMatches']:
-            face_match = FeceMatch.parse(data)
-            face_matches.append(face_match)
-
-        return face_matches
 
 
 if __name__ == "__main__":
+    from argparse import ArgumentParser
+    from pprint import pprint
+
     parser = ArgumentParser()
 
     parser.add_argument('--path', required=True)
