@@ -1,14 +1,14 @@
 from dataclasses import dataclass
-from typing import Dict
+from typing import Dict, Optional
 
-from amazon_rekognition.utils.bounding_box import BoundingBox
+from .bounding_box import BoundingBox
 
 
 @dataclass
 class Face:
     bounding_box: BoundingBox
     confidence: float
-    external_image_id: str
+    external_image_id: Optional[str]
     face_id: str
     image_id: str
 
@@ -16,7 +16,8 @@ class Face:
         return Face(
             bounding_box=BoundingBox.parse(data['BoundingBox']),
             confidence=data['Confidence'],
-            external_image_id=data['ExternalImageId'],
             face_id=data["FaceId"],
             image_id=data["ImageId"],
+            external_image_id=data['ExternalImageId']
+            if 'ExternalImageId' in data else None,
         )
