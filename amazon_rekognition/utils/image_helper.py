@@ -6,8 +6,8 @@ from PIL import Image
 def get_image_bytes(
     image_path: str,
     quality: int = 100,
-) -> bytearray:
-    image_bytes: bytearray
+) -> bytes:
+    image_bytes: bytes
 
     with open(image_path, 'rb') as image_file:
         image = Image.open(image_file)

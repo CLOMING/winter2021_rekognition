@@ -101,15 +101,15 @@ class MaskDetector(AmazonRekognition[List[Person]]):
 
     def __init__(
         self,
-        image_path: str,
+        image: bytes,
         confidence: float = 80.0,
     ) -> None:
-        super().__init__(image_path)
+        super().__init__(image)
         self.confidence = confidence
 
     def get_response(self) -> Dict:
         return self.client.detect_protective_equipment(
-            Image={'Bytes': self.image_bytes},
+            Image={'Bytes': self.image},
             SummarizationAttributes={
                 'MinConfidence': confidence,
                 'RequiredEquipmentTypes': ['FACE_COVER']
@@ -140,7 +140,7 @@ if __name__ == "__main__":
     else:
         utils.disable_measure_time()
 
-    mask_detector = MaskDetector(image_path, confidence)
+    mask_detector = MaskDetector.from_file(image_path, confidence)
     persons = mask_detector.run()
 
     for person in persons:
