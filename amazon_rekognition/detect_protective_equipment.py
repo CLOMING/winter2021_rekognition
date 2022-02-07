@@ -135,8 +135,10 @@ if __name__ == "__main__":
     image_path = args.path
     confidence = float(args.confidence) if args.confidence else 80
 
-    utils.enable_measure_time(
-    ) if args.measure_time == True else utils.disable_measure_time()
+    if args.measure_time:
+        utils.enable_measure_time()
+    else:
+        utils.disable_measure_time()
 
     mask_detector = MaskDetector(image_path, confidence)
     persons = mask_detector.run()

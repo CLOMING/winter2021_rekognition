@@ -58,8 +58,10 @@ if __name__ == "__main__":
     threshold = float(args.threshold) if args.threshold else 70
     max_faces = int(args.max_faces) if args.max_faces else 2
 
-    enable_measure_time(
-    ) if args.measure_time == True else disable_measure_time()
+    if args.measure_time:
+        enable_measure_time()
+    else:
+        disable_measure_time()
 
     face_searcher = FaceSearcher(
         image_path=image_path,
