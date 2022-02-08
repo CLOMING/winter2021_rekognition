@@ -5,7 +5,8 @@ from amazon_rekognition import AmazonImage
 from external_id_db import ExternalIdDb
 from index_faces import FaceIndexer
 from search_faces_by_image import FaceMatch, FaceSearcher
-from utils import *
+from utils.face import *
+from utils.measure_time import *
 
 
 class FaceManager:
