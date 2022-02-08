@@ -111,7 +111,7 @@ class MaskDetector(AmazonRekognition[List[Person]]):
         return self.client.detect_protective_equipment(
             Image={'Bytes': self.image},
             SummarizationAttributes={
-                'MinConfidence': confidence,
+                'MinConfidence': self.confidence,
                 'RequiredEquipmentTypes': ['FACE_COVER']
             },
         )
