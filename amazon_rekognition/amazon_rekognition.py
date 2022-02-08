@@ -11,7 +11,7 @@ from utils.measure_time import measure_time
 T = TypeVar('T')
 
 
-class AmazonRekognition(Generic[T], metaclass=ABCMeta):
+class AmazonImage:
 
     def __init__(
         self,
@@ -19,30 +19,34 @@ class AmazonRekognition(Generic[T], metaclass=ABCMeta):
     ) -> None:
         if not image:
             raise ValueError("`image` must not be `None`!")
-        self.image = image
-        self.client = boto3.client('rekognition')
+
+        self.__bytes = image
 
     @classmethod
-    def from_file(
-        cls,
-        image_path: str,
-        *args,
-        **kargs,
-    ):
-        image = get_image_bytes(image_path)
+    def from_file(cls, path: str):
+        image = get_image_bytes(path)
 
-        return cls(image, *args, **kargs)
+        return cls(image)
 
     @classmethod
-    def from_ndarray(
-        cls,
-        image_array: numpy.ndarray,
-        *args,
-        **kargs,
-    ):
+    def from_ndarray(cls, image_array: numpy.ndarray):
         image = cv2.imencode('.jpg', image_array)[1].tobytes()
 
-        return cls(image, *args, **kargs)
+        return cls(image)
+
+    @property
+    def bytes(self) -> bytes:
+        return self.__bytes
+
+
+class AmazonRekognition(Generic[T], metaclass=ABCMeta):
+
+    def __init__(
+        self,
+        image: AmazonImage,
+    ) -> None:
+        self.image = image
+        self.client = boto3.client('rekognition')
 
     @measure_time
     def run(self) -> T:

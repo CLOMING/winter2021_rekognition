@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Dict, List
 
-from amazon_rekognition import AmazonRekognition
+from amazon_rekognition import AmazonImage, AmazonRekognition
 import utils
 
 
@@ -101,7 +101,7 @@ class MaskDetector(AmazonRekognition[List[Person]]):
 
     def __init__(
         self,
-        image: bytes,
+        image: AmazonImage,
         confidence: float = 80.0,
     ) -> None:
         super().__init__(image)
@@ -109,7 +109,7 @@ class MaskDetector(AmazonRekognition[List[Person]]):
 
     def get_response(self) -> Dict:
         return self.client.detect_protective_equipment(
-            Image={'Bytes': self.image},
+            Image={'Bytes': self.image.bytes},
             SummarizationAttributes={
                 'MinConfidence': self.confidence,
                 'RequiredEquipmentTypes': ['FACE_COVER']
@@ -140,7 +140,10 @@ if __name__ == "__main__":
     else:
         utils.disable_measure_time()
 
-    mask_detector = MaskDetector.from_file(image_path, confidence)
+    mask_detector = MaskDetector(
+        image=AmazonImage.from_file(image_path),
+        confidence=confidence,
+    )
     persons = mask_detector.run()
 
     for person in persons:

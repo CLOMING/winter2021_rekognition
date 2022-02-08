@@ -1,6 +1,7 @@
 from typing import List, Tuple
 from uuid import uuid4
 
+from amazon_rekognition import AmazonImage
 from external_id_db import ExternalIdDb
 from index_faces import FaceIndexer
 from search_faces_by_image import FaceMatch, FaceSearcher
@@ -14,7 +15,7 @@ class FaceManager:
 
     def add_face(
         self,
-        image_path: str,
+        image: AmazonImage,
         name: Optional[str],
     ) -> Tuple[str, Face]:
         external_id = self._create_external_id()
@@ -30,21 +31,21 @@ class FaceManager:
 
     def add_all_faces(
         self,
-        image_path: str,
+        image: AmazonImage,
     ) -> List[Tuple[str, Face]]:
         # TODO: 사진 상의 모든 얼굴을 등록, 이름은 random으로 부여
         pass
 
     def search_face(
         self,
-        image_path: str,
+        image: AmazonImage,
     ) -> List[FaceMatch]:
         # TODO: 얼굴 인식한 결과를 return
         pass
 
     def update_name(
         self,
-        image_path: str,
+        image: AmazonImage,
         name: str
     ) -> :
         # TODO: 이름을 업데이트하여 결과를 반환

@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import Dict, List
 
-from amazon_rekognition import AmazonRekognition
+from amazon_rekognition import AmazonImage, AmazonRekognition
 from utils import *
 
 
@@ -21,7 +21,7 @@ class FaceSearcher(AmazonRekognition[List[FaceMatch]]):
 
     def __init__(
         self,
-        image: bytes,
+        image: AmazonImage,
         threshold: float = 70.0,
         max_faces: int = 2,
     ) -> None:
@@ -32,7 +32,7 @@ class FaceSearcher(AmazonRekognition[List[FaceMatch]]):
     def get_response(self) -> Dict:
         return self.client.search_faces_by_image(
             CollectionId='Maskless_Collection',
-            Image={'Bytes': self.image},
+            Image={'Bytes': self.image.bytes},
             FaceMatchThreshold=self.threshold,
             MaxFaces=self.max_faces,
         )
@@ -63,8 +63,8 @@ if __name__ == "__main__":
     else:
         disable_measure_time()
 
-    face_searcher = FaceSearcher.from_file(
-        image_path=image_path,
+    face_searcher = FaceSearcher(
+        image=AmazonImage.from_file(image_path),
         threshold=threshold,
         max_faces=max_faces,
     )
