@@ -1,34 +1,54 @@
+from dataclasses import dataclass
 from typing import Dict, List
-import boto3
+
+from utils.bounding_box import BoundingBox
 from utils.measure_time import *
 from amazon_rekognition import *
 
-class detect_Person(AmazonRekognition):
-    def __init__(   #생성자
+
+@dataclass(frozen=True)
+class Person:
+    confidence: float
+    bounding_box: BoundingBox
+
+    def parse(data: Dict):
+        return Person(
+            confidence=data['Confidence'],
+            bounding_box=BoundingBox.parse(data['Instance'][0]['BoundingBox']),
+        )
+
+
+class DetectPerson(AmazonRekognition[List[Person]]):
+
+    def __init__(
         self,
         image: AmazonImage,
     ) -> None:
-        self.image = image
-        self.client = boto3.client('rekognition')
-
-    def run(self)->T:
-        return self.call_rekognition()
-
-    def call_rekognition(self)->T:
-        return self.get_response()
+        super().__init__(image)
 
     def get_response(self) -> List[Dict]:
-        response = self.client.detect_labels(Image={'Bytes': self.image.bytes})
-        return self.parse_result(response['Labels'])
-    
-    def parse_result(self, response: List[Dict]) -> T:
-        """
-        사람 수 출력
-        """
-        for label in response:
-            if label['Name'] == 'Person':
-                return (len(label['Instances']), label) #사람 수 출력
-        return None
+        return self.client.detect_labels(Image={
+            'Bytes': self.image.bytes,
+        }, )
+
+    def parse_result(self, response: Dict) -> List[Person]:
+        labels = response['Labels']
+        result: List[Person] = []
+        for label in labels:
+            if not (label['name'] == 'Person'):
+                continue
+
+            instances = label['Instance']
+
+            if not (len(instances) == 1):
+                continue
+
+            if len(instances) == 1 and "BoundingBox" in instances[0]:
+                pass
+
+            result.append(Person())
+
+        return result
 
 
 if __name__ == "__main__":
@@ -42,13 +62,8 @@ if __name__ == "__main__":
 
     image_path = args.path
 
-    detect_person = detect_Person(
-        image = AmazonImage.from_file(image_path)
-    )
-    
+    detect_person = DetectPerson(image=AmazonImage.from_file(image_path))
+
     res = detect_person.run()
-    
-    if res == None:
-        print('사람 없음')
-    else:
-        pprint(res[1])
+
+    pprint(res)
