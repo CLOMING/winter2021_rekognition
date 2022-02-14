@@ -1,5 +1,6 @@
 from dataclasses import dataclass
-from typing import Any, Optional
+from pprint import pprint
+from typing import Any, List, Optional
 
 import boto3
 
@@ -55,6 +56,10 @@ class ExternalIdDb:
             'UserId': user_id,
             'UserName': name,
         })
+
+        ## status code 확인해서 200이 아닐 경우 exception raise
+
+        pprint(res)
         return True
 
     def read(
@@ -66,6 +71,8 @@ class ExternalIdDb:
 
         if not ('Item' in res):
             raise ExternalIdDbNotExistException(user_id)
+
+        pprint(res)
 
         return res['Item']['UserName']
 
@@ -84,7 +91,7 @@ class ExternalIdDb:
         self,
         user_id: str,
     ) -> bool:
-        is_exist: bool = False
+        is_exist: bool
         try:
             self.read(user_id)
         except ExternalIdDbNotExistException:
@@ -97,6 +104,8 @@ class ExternalIdDb:
 
         table = self.db.Table('Faces')
         res = table.delete_item(Key={'UserId': user_id}, )
+
+        pprint(res)
         return True
 
 
