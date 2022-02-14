@@ -89,6 +89,8 @@ class ExternalIdDb:
             self.read(user_id)
         except ExternalIdDbNotExistException:
             is_exist = False
+        else:
+            is_exist = True
 
         if not is_exist:
             return False
@@ -133,8 +135,3 @@ class ExternalIdDbNotExistException(ExternalIdDbException):
             'user_id is not exist.',
             {'user_id': user_id},
         )
-
-
-if __name__ == '__main__':
-    ex = ExternalIdDb()
-    ex.delete('11111')
