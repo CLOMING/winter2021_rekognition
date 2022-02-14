@@ -35,10 +35,10 @@ class DetectPerson(AmazonRekognition[List[Person]]):
         labels = response['Labels']
         result: List[Person] = []
         for label in labels:
-            if not (label['name'] == 'Person'):
+            if not (label['Name'] == 'Person'):
                 continue
 
-            instances = label['Instance']
+            instances = label['Instances']
 
             if not (len(instances) == 1):
                 continue
