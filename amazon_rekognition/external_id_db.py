@@ -44,8 +44,10 @@ class ExternalIdDb:
             self.read(user_id)
         except ExternalIdDbNotExistException:
             is_exist = False
+        else:
+            is_exist = True
 
-        if not is_exist:
+        if is_exist:
             return False
 
         table = self.db.Table('Faces')
