@@ -14,7 +14,7 @@ class Person:
     def parse(data: Dict):
         return Person(
             confidence=data['Confidence'],
-            bounding_box=BoundingBox.parse(data['Instance'][0]['BoundingBox']),
+            bounding_box=BoundingBox.parse(data['BoundingBox']),
         )
 
 
@@ -34,19 +34,21 @@ class DetectPerson(AmazonRekognition[List[Person]]):
     def parse_result(self, response: Dict) -> List[Person]:
         labels = response['Labels']
         result: List[Person] = []
+
         for label in labels:
             if not (label['Name'] == 'Person'):
                 continue
 
             instances = label['Instances']
 
-            if not (len(instances) == 1):
+            if len(instances) == 0: #없으면
                 continue
 
-            if len(instances) == 1 and "BoundingBox" in instances[0]:
-                pass
-
-            result.append(Person())
+            #1개 이상일 때 
+            #instances는 1개 이상으로 나옴
+            if len(instances) > 0: 
+                for instance in instances:
+                    result.append(Person(instance))  
 
         return result
 
