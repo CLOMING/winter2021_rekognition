@@ -45,10 +45,9 @@ class DetectPerson(AmazonRekognition[List[Person]]):
                 continue
 
             #1개 이상일 때 
-            #instances는 1개 이상으로 나옴
-            if len(instances) > 0: 
-                for instance in instances:
-                    result.append(Person(instance))  
+            #instances는 1개 이상으로 나옴 
+            for instance in instances:
+                result.append(Person(instance))  
 
         return result
 
