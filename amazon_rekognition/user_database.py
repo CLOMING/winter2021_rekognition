@@ -1,35 +1,47 @@
 from dataclasses import dataclass
-from typing import Any, List, Optional
+from typing import Any, Dict, List, Optional
 
 import boto3
 
-
-@dataclass
+@dataclass(frozen=True)
 class User:
     user_id: str
     name: str
     face_ids: List[str]
+
+    @classmethod
+    def parse(data: Dict):
+        return User(
+            # TODO
+        )
+
+    def copy_with(
+        self,
+        name: Optional[str] = None,
+        face_ids: Optional[List[str]] = None,
+    ):
+        return User(
+            user_id=self.user_id,
+            name=name or self.name,
+            face_ids=face_ids or self.face_ids,
+        )
 
 
 class UserDatabase:
     __service_name = 'dynamodb'
     __region_name = 'ap-northeast-2'
     __table_name = 'User'
+    __db = boto3.resource(
+        __service_name,
+        region_name=__region_name,
+    )
 
     def __init__(self) -> None:
-        db = boto3.resource(
-            UserDatabase.__service_name,
-            region_name=UserDatabase.__region_name,
-        )
-        self.table = db.Table(UserDatabase.__table_name)
+        self.table = UserDatabase.__db.Table(UserDatabase.__table_name)
 
     @classmethod
-    def create_table(self):  #self로 접근하는게 맞는지
-        #  table = boto3.resource(
-        #     UserDatabase.__service_name,
-        #     region_name=UserDatabase.__region_name,
-        # )
-        table = self.db.create_table(
+    def create_table():
+        UserDatabase.__db.create_table(
             TableName='Users',
             KeySchema=[
                 {
@@ -50,32 +62,41 @@ class UserDatabase:
             ProvisionedThroughput={
                 'ReadCapacityUnits': 10,
                 'WriteCapacityUnits': 10
-            })
-        # TableName 'User'로 설정
-        # keySchema user_id
-        # name: str, face_id: List[str]
-        pass
+            },
+        )
 
     @classmethod
     def delete_table():
-        db = boto3.resource(
-            UserDatabase.__service_name,
-            region_name=UserDatabase.__region_name,
-        )
-        db.Table(UserDatabase.__table_name).delete()
+        UserDatabase.__db.Table(UserDatabase.__table_name).delete()
 
-    def create(self, user_id: str, name: str):
-        
-        # put_item 한 res의 status code를 확인해서 200이 아니면 exception
+    def create(self, user: User):
+        # read해서 존재 여부 체크 후 이미 사용중인 user_id라면 UserDatabaseUserAlreadExistException raise
         pass
 
     def read(self, user_id: str) -> User:
         # item에 user 없는지 확인해서 exception -> UserDatabaseUserNotExistException
         pass
 
+    def update(self, user: User):
+        try:
+            self.read(user.user_id)
+        except:
+            # TODO
+
+        self.create(user)
+    
+
     def delete(self, user_id: str):
-        # res의 status code를 확인해서 진행
+        # read해서 존재 여부 체크 후 없다면 UserDatabaseUserNotExistException raise
         pass
+
+    def search_by_name(self, name: str) -> User:
+        # name으로 user 찾기
+
+    def search_by_face_id(self, face_id: str) -> User:
+        # face_id 로 user 찾기
+
+
 
 
 class UserDatabaseException(Exception):
@@ -95,6 +116,10 @@ class UserDatabaseException(Exception):
             error_message += f'\n{self.data}'
 
         return error_message
+
+
+class UserDatabaseUserNotExistException(UserDatabaseException):
+    # TODO
 
 
 class UserDatabaseUserAlreadExistException(UserDatabaseException):
