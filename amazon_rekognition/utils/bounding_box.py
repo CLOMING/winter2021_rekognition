@@ -17,7 +17,7 @@ class BoundingBox:
     def bottom(self) -> float:
         return self.top + self.height
 
-    def calulate_points(
+    def calculate_points(
         self,
         img_width: int,
         img_height: int,
