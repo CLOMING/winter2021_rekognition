@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Final, List, Optional
 
 from boto3.dynamodb.conditions import Attr
 import boto3
@@ -65,10 +65,10 @@ class UserDatabaseUserAlreadExistException(UserDatabaseException):
 
 
 class UserDatabase:
-    __service_name = 'dynamodb'
-    __region_name = 'ap-northeast-2'
-    __table_name = 'Users'
-    __db = boto3.resource(
+    __service_name: Final[str] = 'dynamodb'
+    __region_name: Final[str] = 'ap-northeast-2'
+    __table_name: Final[str] = 'Users'
+    __db: Final = boto3.resource(
         __service_name,
         region_name=__region_name,
     )
@@ -77,7 +77,7 @@ class UserDatabase:
         self.table = UserDatabase.__db.Table(UserDatabase.__table_name)
 
     @classmethod
-    def create_table(cls):
+    def create_table(cls) -> None:
         UserDatabase.__db.create_table(
             TableName='Users',
             KeySchema=[
@@ -99,7 +99,7 @@ class UserDatabase:
         )
 
     @classmethod
-    def delete_table(cls):
+    def delete_table(cls) -> None:
         UserDatabase.__db.Table(UserDatabase.__table_name).delete()
 
     def create(self, user: User) -> None:
@@ -128,7 +128,7 @@ class UserDatabase:
 
         return User.parse(res['Item'])
 
-    def update(self, user: User, new_name: str):
+    def update(self, user: User, new_name: str) -> None:
         is_exist: bool
         try:
             self.read(user.user_id)
@@ -146,7 +146,7 @@ class UserDatabase:
             'face_ids': user.face_ids
         }, )
 
-    def delete(self, user_id: str):
+    def delete(self, user_id: str) -> None:
         is_exist: bool
         try:
             self.read(user_id)
@@ -166,7 +166,7 @@ class UserDatabase:
 
         return [User.parse(item) for item in res['Items']]
 
-    def search_by_face_id(self, face_id: str) -> User:
+    def search_by_face_id(self, face_id: str) -> List[User]:
         res = self.table.scan(
             FilterExpression=Attr('face_ids').contains(face_id))
         # TODO: use query instead of scan
