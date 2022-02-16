@@ -1,8 +1,8 @@
 from argparse import ArgumentParser
-from typing import List
+from typing import Dict, List
 
 from amazon_rekognition import AmazonRekognition
-from utils import *
+from utils import Face
 
 
 class FaceIndexer(AmazonRekognition[List[Face]]):
