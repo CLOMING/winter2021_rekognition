@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Dict
+from typing import Dict, Tuple
 
 
 @dataclass(frozen=True)
@@ -16,6 +16,21 @@ class BoundingBox:
     @property
     def bottom(self) -> float:
         return self.top + self.height
+
+    def calulate_points(
+        self,
+        img_width: int,
+        img_height: int,
+    ) -> Tuple[int, int, int, int]:
+        """
+        (left, right, top, bottom): Tuple[int, int, int, int]
+        """
+        return (
+            int(self.left * img_width),
+            int(self.right * img_width),
+            int(self.top * img_height),
+            int(self.bottom * img_height),
+        )
 
     def parse(data: Dict):
 
