@@ -5,8 +5,7 @@ import cv2
 import boto3
 import numpy
 
-from utils.image_helper import get_image_bytes
-from utils.measure_time import measure_time
+from utils import get_image_bytes, measure_time
 
 T = TypeVar('T')
 
