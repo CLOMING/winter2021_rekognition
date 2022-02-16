@@ -15,7 +15,7 @@ class BoundingBox:
 
     @property
     def bottom(self) -> float:
-        return self.top - self.height
+        return self.top + self.height
 
     def parse(data: Dict):
 

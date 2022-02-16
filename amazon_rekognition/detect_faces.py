@@ -4,21 +4,22 @@ from typing import Dict, List
 from utils.bounding_box import BoundingBox
 from utils.measure_time import *
 from amazon_rekognition import *
+from pprint import pprint
 
 
 @dataclass(frozen=True)
-class Person:
+class FaceDetail:
     confidence: float
     bounding_box: BoundingBox
 
     def parse(data: Dict):
-        return Person(
+        return FaceDetail(
             confidence=data['Confidence'],
             bounding_box=BoundingBox.parse(data['BoundingBox']),
         )
 
 
-class DetectPerson(AmazonRekognition[List[Person]]):
+class FaceDetector(AmazonRekognition[List[FaceDetail]]):
 
     def __init__(
         self,
@@ -27,29 +28,15 @@ class DetectPerson(AmazonRekognition[List[Person]]):
         super().__init__(image)
 
     def get_response(self) -> List[Dict]:
-        return self.client.detect_labels(Image={
+        return self.client.detect_faces(Image={
             'Bytes': self.image.bytes,
         }, )
 
-    def parse_result(self, response: Dict) -> List[Person]:
-        labels = response['Labels']
-        result: List[Person] = []
-
-        for label in labels:
-            if not (label['Name'] == 'Person'):
-                continue
-
-            instances = label['Instances']
-
-            if len(instances) == 0: #없으면
-                continue
-
-            #1개 이상일 때 
-            #instances는 1개 이상으로 나옴 
-            for instance in instances:
-                result.append(Person(instance))  
-
-        return result
+    def parse_result(self, response: Dict) -> List[FaceDetail]:
+        return [
+            FaceDetail.parse(face_details)
+            for face_details in response['FaceDetails']
+        ]
 
 
 if __name__ == "__main__":
@@ -63,7 +50,7 @@ if __name__ == "__main__":
 
     image_path = args.path
 
-    detect_person = DetectPerson(image=AmazonImage.from_file(image_path))
+    detect_person = FaceDetector(image=AmazonImage.from_file(image_path))
 
     res = detect_person.run()
 

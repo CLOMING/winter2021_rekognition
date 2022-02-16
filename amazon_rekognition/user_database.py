@@ -3,6 +3,8 @@ from typing import Any, Dict, List, Optional
 
 import boto3
 
+from amazon_rekognition.external_id_db import ExternalIdDbNotExistException
+
 @dataclass(frozen=True)
 class User:
     user_id: str
@@ -12,7 +14,9 @@ class User:
     @classmethod
     def parse(data: Dict):
         return User(
-            # TODO
+            user_id=data['UserId'],
+            name=data['Name'],
+            face_ids=[tmp for tmp in data['FaceIds']],
         )
 
     def copy_with(
@@ -70,12 +74,32 @@ class UserDatabase:
         UserDatabase.__db.Table(UserDatabase.__table_name).delete()
 
     def create(self, user: User):
+        is_exist:bool = False
+        try:
+            self.read(User.user_id)
+        except ExternalIdDbNotExistException:
+            is_exist=False
+        else:
+            is_exist=True
+
+        table=self.__db.Table('Users')
+        res=table.put_item(Item={
+            'UserId':User.user_id,
+            'UserName':User.name,
+        })
         # read해서 존재 여부 체크 후 이미 사용중인 user_id라면 UserDatabaseUserAlreadExistException raise
-        pass
+        
 
     def read(self, user_id: str) -> User:
+        table=self.__db.Table('Users')
+        res=table.get_item(Key={'UserID':user_id})
+
+        if not ('Item' in res):
+            raise ExternalIdDbNotExistException(user_id)
+
+        return res['Item']['UserName']
         # item에 user 없는지 확인해서 exception -> UserDatabaseUserNotExistException
-        pass
+        
 
     def update(self, user: User):
         try:
