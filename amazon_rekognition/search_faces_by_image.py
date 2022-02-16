@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from typing import Dict, List
 
 from amazon_rekognition import AmazonRekognition
-from utils import *
+from utils import Face, enable_measure_time, disable_measure_time
 
 
 @dataclass

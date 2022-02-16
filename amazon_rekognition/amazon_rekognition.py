@@ -3,8 +3,7 @@ from typing import Dict, Generic, TypeVar
 
 import boto3
 
-from utils.image_helper import get_image_bytes
-from utils.measure_time import measure_time
+from utils import get_image_bytes, measure_time
 
 T = TypeVar('T')
 
