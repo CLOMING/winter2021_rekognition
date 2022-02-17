@@ -1,9 +1,8 @@
 from dataclasses import dataclass
 from typing import Dict, List
 
-from utils.bounding_box import BoundingBox
-from utils.measure_time import *
-from amazon_rekognition import *
+from utils import BoundingBox
+from amazon_rekognition import AmazonImage, AmazonRekognition
 
 
 @dataclass(frozen=True)
@@ -41,13 +40,13 @@ class PeopleDetector(AmazonRekognition[List[Person]]):
 
             instances = label['Instances']
 
-            if len(instances) == 0: #없으면
+            if len(instances) == 0:  #없으면
                 continue
 
-            #1개 이상일 때 
-            #instances는 1개 이상으로 나옴 
+            #1개 이상일 때
+            #instances는 1개 이상으로 나옴
             for instance in instances:
-                result.append(Person(instance))  
+                result.append(Person(instance))
 
         return result
 
