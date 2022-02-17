@@ -17,7 +17,7 @@ class FaceIndexer(AmazonRekognition[List[Face]]):
 
     def get_response(self) -> Dict:
         return self.client.index_faces(
-            CollectionId='Maskless_Collection',
+            CollectionId='User_Collection',
             Image={'Bytes': self.image.bytes},
             ExternalImageId=self.external_image_id,
             MaxFaces=1,
