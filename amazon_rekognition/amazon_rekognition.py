@@ -1,52 +1,58 @@
 from abc import ABCMeta, abstractmethod
 from typing import Dict, Generic, TypeVar
 
+import cv2
 import boto3
+import numpy
 
 from utils import get_image_bytes, measure_time
 
 T = TypeVar('T')
 
 
+class AmazonImage:
+
+    def __init__(
+        self,
+        image: bytes,
+    ) -> None:
+        if not image:
+            raise ValueError("`image` must not be `None`!")
+
+        self.__bytes = image
+
+    @classmethod
+    def from_file(cls, path: str):
+        image = get_image_bytes(path)
+
+        return cls(image)
+
+    @classmethod
+    def from_ndarray(cls, image_array: numpy.ndarray):
+        image = cv2.imencode('.jpg', image_array)[1].tobytes()
+
+        return cls(image)
+
+    @property
+    def bytes(self) -> bytes:
+        return self.__bytes
+
+
 class AmazonRekognition(Generic[T], metaclass=ABCMeta):
 
     def __init__(
         self,
-        image_path: str,
+        image: AmazonImage,
     ) -> None:
-        self.image_path = image_path
+        self.image = image
         self.client = boto3.client('rekognition')
 
     @measure_time
     def run(self) -> T:
-        self.read_image()
         return self.call_rekognition()
 
     @measure_time
-    def read_image(self, quality: int = 25) -> bytearray:
-        try:
-            self.image_bytes
-        except AttributeError:
-            pass
-        else:
-            if not (self.image_bytes == None):
-                return self.image_bytes
-
-        image_bytes = get_image_bytes(self.image_path, quality)
-
-        self.image_bytes = image_bytes
-        return image_bytes
-
-    @measure_time
     def call_rekognition(self) -> T:
-        try:
-            self.image_bytes
-        except AttributeError:
-            self.read_image()
-        else:
-            if self.image_bytes == None:
-                self.read_image()
-
         response = self.get_response()
 
         return self.parse_result(response)
