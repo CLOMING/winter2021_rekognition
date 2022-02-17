@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from enum import Enum
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 from amazon_rekognition import AmazonImage, AmazonRekognition
 import utils
@@ -87,6 +87,25 @@ class Person:
             return MaskStatus.NOT_WEARED
 
         return MaskStatus.WEARED
+
+    @property
+    def mask(self) -> Optional[EquipmentDetection]:
+        faces = [part for part in self.body_parts if part.name == 'FACE']
+
+        if not faces:
+            return None
+
+        face = faces[0]
+
+        masks = [
+            equipment for equipment in face.equipment_detections
+            if equipment.type == 'FACE_COVER'
+        ]
+
+        if not masks:
+            return None
+
+        return masks[0]
 
     def parse(data: Dict):
         return Person(
