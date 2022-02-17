@@ -42,12 +42,21 @@ class BoundingBox:
         )
 
 
-def compare(
-    box1: Tuple[int, int, int, int],
-    box2: Tuple[int, int, int, int],
+def calculate_IoU(  #Intersection over Union
+    boxA: Tuple[int, int, int, int],
+    boxB: Tuple[int, int, int, int],
 ) -> float:
-    pass
+    inter_left = max(boxA[0], boxB[0])
+    inter_right = min(boxA[1], boxB[1])
+    inter_top = max(boxA[2], boxB[2])
+    inter_bottom = min(boxA[3], boxB[3])
 
+    inter_area = max(0, inter_right - inter_left) * max(
+        0, inter_bottom - inter_top)
 
-# if compare(mask.bounding_box.calculate_points(123,123), face.bounding_box.calculate_points(123,123)) > 0.5:
-#     print(같은 사람)
+    boxA_area = (boxA[1] - boxA[0]) * (boxA[3] - boxA[2])
+    boxB_area = (boxB[1] - boxB[0]) * (boxB[3] - boxB[2])
+
+    iou = inter_area / float(boxA_area + boxB_area - inter_area)
+
+    return iou
