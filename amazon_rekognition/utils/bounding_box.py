@@ -40,3 +40,14 @@ class BoundingBox:
             top=data['Top'],
             left=data['Left'],
         )
+
+
+def compare(
+    box1: Tuple[int, int, int, int],
+    box2: Tuple[int, int, int, int],
+) -> float:
+    pass
+
+
+# if compare(mask.bounding_box.calculate_points(123,123), face.bounding_box.calculate_points(123,123)) > 0.5:
+#     print(같은 사람)
