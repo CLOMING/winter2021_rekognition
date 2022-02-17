@@ -1,8 +1,8 @@
 from dataclasses import dataclass
 from enum import Enum
-from typing import Dict, List
+from typing import Dict, List, Optional
 
-from amazon_rekognition import AmazonRekognition
+from amazon_rekognition import AmazonImage, AmazonRekognition
 import utils
 
 
@@ -88,6 +88,25 @@ class Person:
 
         return MaskStatus.WEARED
 
+    @property
+    def mask(self) -> Optional[EquipmentDetection]:
+        faces = [part for part in self.body_parts if part.name == 'FACE']
+
+        if not faces:
+            return None
+
+        face = faces[0]
+
+        masks = [
+            equipment for equipment in face.equipment_detections
+            if equipment.type == 'FACE_COVER'
+        ]
+
+        if not masks:
+            return None
+
+        return masks[0]
+
     def parse(data: Dict):
         return Person(
             bounding_box=utils.BoundingBox.parse(data['BoundingBox']),
@@ -101,17 +120,17 @@ class MaskDetector(AmazonRekognition[List[Person]]):
 
     def __init__(
         self,
-        image_path: str,
+        image: AmazonImage,
         confidence: float = 80.0,
     ) -> None:
-        super().__init__(image_path)
+        super().__init__(image)
         self.confidence = confidence
 
     def get_response(self) -> Dict:
         return self.client.detect_protective_equipment(
-            Image={'Bytes': self.image_bytes},
+            Image={'Bytes': self.image.bytes},
             SummarizationAttributes={
-                'MinConfidence': confidence,
+                'MinConfidence': self.confidence,
                 'RequiredEquipmentTypes': ['FACE_COVER']
             },
         )
@@ -140,7 +159,10 @@ if __name__ == "__main__":
     else:
         utils.disable_measure_time()
 
-    mask_detector = MaskDetector(image_path, confidence)
+    mask_detector = MaskDetector(
+        image=AmazonImage.from_file(image_path),
+        confidence=confidence,
+    )
     persons = mask_detector.run()
 
     for person in persons:
