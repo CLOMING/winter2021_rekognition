@@ -1,7 +1,6 @@
 from math import floor, ceil
 import random
-from turtle import width
-from typing import List, Tuple
+from typing import Any, List, Tuple
 from uuid import uuid4
 
 import cv2
@@ -9,7 +8,7 @@ import numpy as np
 
 from amazon_rekognition import AmazonImage
 from detect_faces import FaceDetector, FaceDetail
-from external_id_db import ExternalIdDb
+from user_database import User, UserDatabase, UserDatabaseUserAlreadExistException
 from index_faces import FaceIndexer
 from search_faces_by_image import FaceMatch, FaceSearcher
 from utils.face import *
@@ -19,41 +18,112 @@ from utils.measure_time import *
 class FaceManager:
 
     def __init__(self) -> None:
-        self.db = ExternalIdDb()
+        self.db = UserDatabase()
 
     def get_faces(
         self,
         image: AmazonImage,
     ) -> List[FaceDetail]:
-        pass
+
+        face_detector = FaceDetector(image=image)
+        faces = face_detector.run()
+
+        if not faces:
+            raise FaceManagerExceptionFaceNotExistException
+
+        return faces
+
+    def search_face(
+        self,
+        image: AmazonImage,
+    ) -> List[Tuple[FaceMatch, int, int]]:
+
+        face_informations: Tuple[np.ndarray, int, int]
+
+        try:
+            face_informations = self.crop_image(image)
+        except FaceManagerExceptionFaceNotExistException as e:
+            raise e
+
+        result: List[Tuple[FaceMatch, int, int]] = []
+
+        for face_information in face_informations:
+            face_searcher = FaceSearcher(image=image, max_faces=1)
+            face_matches = face_searcher.run()
+
+            if face_matches:
+                result.append([face_matches[0], face_information[1],
+                              face_information[2]])
+
+        if not result:
+            raise FaceManagerExceptionFaceNotSearchedException
+
+        return result
+
+    def crop_image(
+        self,
+        image: AmazonImage,
+    ) -> List[Tuple[np.ndarray, int, int]]:
+        try:
+            faces = self.get_faces(image)
+        except FaceManagerExceptionFaceNotExistException as e:
+            raise e
+
+        encoded_img = np.fromstring(image.bytes, dtype=np.uint8)
+        img = cv2.imdecode(encoded_img, cv2.IMREAD_COLOR)
+        img_height = img.shape[0]
+        img_width = img.shape[1]
+
+        new_images = []
+        for face in faces:
+            bounding_box = face.bounding_box
+
+            left = bounding_box.left * img_width
+            top = bounding_box.top * img_height
+            width = bounding_box.width * img_width
+            height = bounding_box.height * img_height
+
+            cropped_img = img[floor(top):ceil(top + height),
+                              floor(left):ceil(left + width)]
+            new_images.append((cropped_img, left, top))
+
+        return new_images
 
     def add_face(
         self,
         image: AmazonImage,
         name: Optional[str] = None,
     ) -> Tuple[str, Face]:
-        external_id = self._create_external_id()
 
+        try:
+            faces = self.get_faces(image)
+        except FaceManagerExceptionFaceNotExistException as e:
+            raise e
+
+        external_id = self._create_external_id()
         if not name:
             name = self._create_name()
 
-        face_searcher = FaceSearcher(image=image, max_faces=1)
-        face_matches = face_searcher.run()
+        face_matches: Optional[List[Tuple[FaceMatch, int, int]]]
+        try:
+            face_matches = self.search_face(image)
+        except FaceManagerExceptionFaceNotSearchedException:
+            face_matches = None
 
-        if not not face_matches:
-            raise ValueError('face is already existed.')
+        if face_matches:
+            raise FaceManagerExceptionFaceAlreadyExistException(
+                face_matches[0][0].face.external_image_id)
 
         face_indexer = FaceIndexer(image=image, external_image_id=external_id)
         faces = face_indexer.run()
-
         if not faces:
-            raise ValueError("face Indexing error")
+            raise FaceManagerExceptionFaceIndexErrorException
 
-        external_id_db = ExternalIdDb()
-        item = external_id_db.create(user_id=external_id, name=name)
-
-        if not item:
-            raise ValueError("item is already existed in table")
+        try:
+            self.db.create(User(external_id, name, [faces[0].face_id]))
+        except UserDatabaseUserAlreadExistException:
+            raise FaceManagerExceptionItemAlreadyExistException(
+                external_image_id=external_id)
 
         return external_id, faces[0]
 
@@ -61,47 +131,41 @@ class FaceManager:
         self,
         image: AmazonImage,
     ) -> List[Tuple[str, Face]]:
-        face_detector = FaceDetector(image=image)
-        faces = face_detector.run()
+        try:
+            self.get_faces(image)
+        except FaceManagerExceptionFaceNotExistException as e:
+            raise e
 
-        encoded_img = np.fromstring(image.bytes, dtype=np.uint8)
-        img = cv2.imdecode(encoded_img, cv2.IMREAD_COLOR)
-        img_width = img.shape[1]
-        img_height = img.shape[0]
-
-        for face in faces:
-            bounding_box = face.bounding_box
-
-            left = bounding_box.left
-            top = bounding_box.top
-            width = bounding_box.width
-            height = bounding_box.height
-
-            cropped_img = img[floor(img_height * top):ceil(img_height *
-                                                           (top + height)),
-                              floor(img_width * left):ceil(img_width *
-                                                           (left + width))]
-            self.add_face(AmazonImage.from_ndarray(cropped_img))
-  
-    def search_face(
-        self,
-        image: AmazonImage,
-    ) -> List[FaceMatch]:
-        face_searcher = FaceSearcher(image=image)
-        face_matches = face_searcher.run()
-        # TODO: 얼굴 인식한 결과를 return
+        cropped_images_details = self.crop_image(image)
+        for cropped_image_details in cropped_images_details:
+            cropped_image_ndarray = cropped_image_details[0]  #ndarray
+            cropped_image = AmazonImage.from_ndarray(cropped_image_ndarray)
+            try:
+                print(self.add_face(cropped_image))
+            except Exception as e:
+                print(e)
 
     def update_name(self, image: AmazonImage, name: str) -> Tuple[str, Face]:
-        face_searcher = FaceSearcher()
-        face_matches = face_searcher.run()
-        face = face_matches[0]
 
-        external_id_db = ExternalIdDb()
-        external_id_db.update(user_id=face['ExternalImageID'], new_name=name)
+        try:
+            self.get_faces(image)
+        except FaceManagerExceptionFaceNotExistException as e:
+            raise e
+
+        try:
+            face_informations = self.search_face(image)
+        except FaceManagerExceptionFaceNotSearchedException as e: 
+            raise e
+
+        if not len(face_informations) == 1: 
+            raise FaceManagerExceptionUpdateNameException(
+                len(face_informations))
+
+        face = face_informations[0][0].face
+        user = self.db.read(face.external_image_id)
+        self.db.update(user, new_name=name)
 
         return name, face
-        # TODO: 이름을 업데이트하여 결과를 반환
-        # image얼굴 검색, id 찾고 , name 바꾸기
 
     def _create_external_id(self) -> str:
         return str(uuid4())
@@ -110,9 +174,6 @@ class FaceManager:
         """
         create name randomly (feature + animal + num)
         """
-        # TODO: '~~한 ~~ ' 형태의 임의의 이름을 생성 ex) '까칠한 하트병정 001'
-        # 뒤의 숫자는 3자리 랜덤 숫자
-
         feature = [
             '게으른', '당돌한', '행복한', '까칠한', '귀여운', '수줍은', '다정한', '엉뚱한', '나른한'
         ]
@@ -121,3 +182,69 @@ class FaceManager:
         nickname = random.choice(feature) + random.choice(animal) + str(
             random.choice(numList)).zfill(3)
         return nickname
+
+
+class FaceManagerException(Exception):
+
+    def __init__(
+        self,
+        message: str,
+        data: Optional[Any] = None,
+    ) -> None:
+        self.message = message
+        self.data = data
+
+    def __str__(self) -> str:
+        error_message: str = f'[FaceManagerException] {self.message}'
+
+        if self.data:
+            error_message += f'\n{self.data}'
+
+        return error_message
+
+
+class FaceManagerExceptionFaceAlreadyExistException(FaceManagerException):
+
+    def __init__(self, external_image_id: str) -> None:
+        super().__init__(
+            'Face already exists in Collection',
+            {'external_image_id': external_image_id},
+        )
+
+
+class FaceManagerExceptionFaceIndexErrorException(FaceManagerException):
+
+    def __init__(self) -> None:
+        super().__init__('Face Indexing Error')
+
+
+class FaceManagerExceptionItemAlreadyExistException(FaceManagerException):
+
+    def __init__(self, external_image_id: str, name: str) -> None:
+        super().__init__(
+            'Item Already Exists Error',
+            {
+                'external_image_id': external_image_id,
+                'name': name,
+            },
+        )
+
+
+class FaceManagerExceptionUpdateNameException(FaceManagerException):
+
+    def __init__(self, face_count: int) -> None:
+        super().__init__(
+            'The number of face to update name is more than one : ',
+            {'face_count': face_count})
+
+
+class FaceManagerExceptionFaceNotSearchedException(FaceManagerException):
+
+    def __init__(self) -> None:
+        super().__init__('Face is not Searched in Collection.')
+
+
+class FaceManagerExceptionFaceNotExistException(FaceManagerException):
+
+    def __init__(self) -> None:
+        super().__init__('Fail to Get Face, Because Face Not Exists')
