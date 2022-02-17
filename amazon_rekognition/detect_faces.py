@@ -3,7 +3,7 @@ from typing import Dict, List
 
 from utils.bounding_box import BoundingBox
 from utils.measure_time import *
-from amazon_rekognition import *
+from amazon_rekognition import AmazonImage, AmazonRekognition
 from pprint import pprint
 
 
