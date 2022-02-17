@@ -1,7 +1,7 @@
 from argparse import ArgumentParser
 from typing import Dict, List
 
-from amazon_rekognition import AmazonRekognition
+from amazon_rekognition import AmazonImage, AmazonRekognition
 from utils import Face
 
 
@@ -9,16 +9,16 @@ class FaceIndexer(AmazonRekognition[List[Face]]):
 
     def __init__(
         self,
-        image_path: str,
+        image: AmazonImage,
         external_image_id: str,
     ) -> None:
-        super().__init__(image_path)
+        super().__init__(image)
         self.external_image_id = external_image_id
 
     def get_response(self) -> Dict:
         return self.client.index_faces(
-            CollectionId='Maskless_Collection',
-            Image={'Bytes': self.image_bytes},
+            CollectionId='User_Collection',
+            Image={'Bytes': self.image.bytes},
             ExternalImageId=self.external_image_id,
             MaxFaces=1,
             QualityFilter='AUTO',
@@ -44,6 +44,9 @@ if __name__ == "__main__":
     image_path = args.path
     id = args.id
 
-    face_indexer = FaceIndexer(image_path=image_path, external_image_id=id)
+    face_indexer = FaceIndexer(
+        image=AmazonImage.from_file(image_path),
+        external_image_id=id,
+    )
     face = face_indexer.run()
     pprint(face)

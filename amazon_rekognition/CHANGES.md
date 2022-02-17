@@ -8,3 +8,10 @@
 
 ## 0.1.1
 - Fix __init__.py
+
+## 0.2
+- Add FaceManager
+- Add UserDatabase
+- Update BoundingBox
+- Add FaceDetector
+- Add PeopleDetector
