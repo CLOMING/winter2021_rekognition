@@ -23,7 +23,7 @@ class FaceSearcher(AmazonRekognition[List[FaceMatch]]):
         self,
         image: AmazonImage,
         threshold: float = 70.0,
-        max_faces: int = 2,
+        max_faces: int = 100,
     ) -> None:
         super().__init__(image)
         self.threshold = threshold
@@ -31,7 +31,7 @@ class FaceSearcher(AmazonRekognition[List[FaceMatch]]):
 
     def get_response(self) -> Dict:
         return self.client.search_faces_by_image(
-            CollectionId='Maskless_Collection',
+            CollectionId='User_Collection',
             Image={'Bytes': self.image.bytes},
             FaceMatchThreshold=self.threshold,
             MaxFaces=self.max_faces,
