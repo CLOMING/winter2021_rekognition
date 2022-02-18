@@ -46,7 +46,7 @@ class PeopleDetector(AmazonRekognition[List[Person]]):
             #1개 이상일 때
             #instances는 1개 이상으로 나옴
             for instance in instances:
-                result.append(Person(instance))
+                result.append(Person.parse(instance))
 
         return result
 
