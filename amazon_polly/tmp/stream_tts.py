@@ -17,7 +17,7 @@ class TTS():
         text:str,
     ) -> None:
         self.text=text
-        session = Session(profile_name="soojin_polly")
+        session = Session(profile_name="default")
         self.polly = session.client("polly")
 
     def get_response(self)->None:
