@@ -15,3 +15,6 @@
 - Update BoundingBox
 - Add FaceDetector
 - Add PeopleDetector
+
+## 0.2.1
+- Add option to skip checking face exist in FaceManager

@@ -38,7 +38,7 @@ class FaceManager:
         image: AmazonImage,
     ) -> List[Tuple[FaceMatch, int, int]]:
 
-        face_informations: Tuple[np.ndarray, int, int]
+        face_informations: List[Tuple[np.ndarray, int, int]]
 
         try:
             face_informations = self.crop_image(image)
@@ -48,17 +48,35 @@ class FaceManager:
         result: List[Tuple[FaceMatch, int, int]] = []
 
         for face_information in face_informations:
-            face_searcher = FaceSearcher(image=image, max_faces=1)
-            face_matches = face_searcher.run()
+            face_matches: FaceMatch
+            try:
+                face_matches = self.search_only_one_face(
+                    AmazonImage.from_ndarray(face_information[0]))
+            except FaceManagerExceptionFaceNotSearchedException:
+                face_matches = None
 
-            if face_matches:
-                result.append([face_matches[0], face_information[1],
-                              face_information[2]])
+            if not face_matches:
+                continue
+
+            result.append(
+                [face_matches, face_information[1], face_information[2]])
 
         if not result:
             raise FaceManagerExceptionFaceNotSearchedException
 
         return result
+
+    def search_only_one_face(
+        self,
+        image: AmazonImage,
+    ) -> FaceMatch:
+        face_searcher = FaceSearcher(image, max_faces=1)
+        face_matches = face_searcher.run()
+
+        if not face_matches:
+            raise FaceManagerExceptionFaceNotSearchedException()
+
+        return face_matches[0]
 
     def crop_image(
         self,
@@ -93,12 +111,14 @@ class FaceManager:
         self,
         image: AmazonImage,
         name: Optional[str] = None,
+        check_face_exist: bool = True,
     ) -> Tuple[str, Face]:
 
-        try:
-            faces = self.get_faces(image)
-        except FaceManagerExceptionFaceNotExistException as e:
-            raise e
+        if check_face_exist:
+            try:
+                self.get_faces(image)
+            except FaceManagerExceptionFaceNotExistException as e:
+                raise e
 
         external_id = self._create_external_id()
         if not name:
@@ -154,10 +174,10 @@ class FaceManager:
 
         try:
             face_informations = self.search_face(image)
-        except FaceManagerExceptionFaceNotSearchedException as e: 
+        except FaceManagerExceptionFaceNotSearchedException as e:
             raise e
 
-        if not len(face_informations) == 1: 
+        if not len(face_informations) == 1:
             raise FaceManagerExceptionUpdateNameException(
                 len(face_informations))
 
