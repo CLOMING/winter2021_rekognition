@@ -18,3 +18,6 @@
 
 ## 0.2.1
 - Add option to skip checking face exist in FaceManager
+
+## 0.2.2
+- Fix PeopleDetector
