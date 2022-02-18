@@ -52,7 +52,7 @@ class FaceManager:
             try:
                 face_matches = self.search_only_one_face(
                     AmazonImage.from_ndarray(face_information[0]))
-            except FaceManagerExceptionFaceNotExistException:
+            except FaceManagerExceptionFaceNotSearchedException:
                 face_matches = None
 
             if not face_matches:
@@ -74,7 +74,7 @@ class FaceManager:
         face_matches = face_searcher.run()
 
         if not face_matches:
-            raise FaceManagerExceptionFaceNotExistException()
+            raise FaceManagerExceptionFaceNotSearchedException()
 
         return face_matches[0]
 
