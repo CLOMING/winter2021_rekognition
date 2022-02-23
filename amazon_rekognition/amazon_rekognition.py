@@ -5,7 +5,7 @@ import cv2
 import boto3
 import numpy
 
-from utils import get_image_bytes, measure_time
+from utils import get_image_bytes, get_image_bytes_from_url, measure_time
 
 T = TypeVar('T')
 
@@ -30,6 +30,12 @@ class AmazonImage:
     @classmethod
     def from_ndarray(cls, image_array: numpy.ndarray):
         image = cv2.imencode('.jpg', image_array)[1].tobytes()
+
+        return cls(image)
+
+    @classmethod
+    def from_url(cls, url: str):
+        image = get_image_bytes_from_url(url)
 
         return cls(image)
 
