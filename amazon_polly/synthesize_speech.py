@@ -1,3 +1,4 @@
+from contextlib import closing
 import io
 from typing import Any, Optional
 
@@ -24,9 +25,8 @@ class TTS():
         if not "AudioStream" in response:
             raise TTSAudioStreamNotExistException()
 
-        stream = response['AudioStream']
-        audio_data = stream.read()
-        stream.close()
+        with closing(response['AudioStream']) as stream:
+            audio_data = stream.read()
 
         sound = AudioSegment.from_file(io.BytesIO(audio_data), format="mp3")
         play(sound)
