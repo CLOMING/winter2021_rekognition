@@ -21,3 +21,6 @@
 
 ## 0.2.2
 - Fix PeopleDetector
+
+## 0.2.3
+- Add AmazonImage.from_url
